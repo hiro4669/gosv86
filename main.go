@@ -77,7 +77,8 @@ func main() {
 	}
 	fmt.Println()
 
-	var dis *disasm.Disasm = new(disasm.Disasm)
+	//	var dis *disasm.Disasm = new(disasm.Disasm)
+	var dis disasm.Disasm
 	fmt.Println("Hello Disasm")
 	dis.Init(text)
 	dis.Run()
