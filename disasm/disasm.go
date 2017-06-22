@@ -55,6 +55,7 @@ func test(opcode *OpCode) {
 func (dis *Disasm) Run() {
 	var opcode OpCode
 	var op byte
+	prevPc := dis.pc
 	for {
 		if int(dis.pc) == len(dis.text) {
 			break
@@ -68,6 +69,7 @@ func (dis *Disasm) Run() {
 				opcode.setReg(op & 7)
 				dis.setData(&opcode)
 				opcode.ShowOpCode()
+				dumpMov(&opcode, prevPc)
 			}
 		default:
 			{
