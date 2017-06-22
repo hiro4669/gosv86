@@ -6,7 +6,10 @@ type OpCode struct {
 	W       uint8
 	D       uint8
 	Reg     uint8
+	Mod     uint8
+	Rm      uint8
 	Data    uint16
+	Disp    int16
 	rawlen  int
 	rawdata [20]byte
 }
@@ -14,9 +17,12 @@ type OpCode struct {
 func (op *OpCode) Reset() {
 	op.W = 0
 	op.D = 0
+	op.Mod = 0
 	op.Reg = 0
+	op.Rm = 0
 	op.Data = 0
 	op.rawlen = 0
+	op.Disp = 0
 }
 
 func (op *OpCode) ShowOpCode() {
@@ -47,4 +53,16 @@ func (op *OpCode) setReg(reg uint8) {
 
 func (op *OpCode) setData(data uint16) {
 	op.Data = data
+}
+
+func (op *OpCode) setMod(mod uint8) {
+	op.Mod = mod
+}
+
+func (op *OpCode) setRm(rm uint8) {
+	op.Rm = rm
+}
+
+func (op *OpCode) setDisp(disp int16) {
+	op.Disp = disp
 }

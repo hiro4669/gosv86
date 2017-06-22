@@ -46,6 +46,35 @@ func (dis *Disasm) setData(opcode *OpCode) {
 	}
 }
 
+func (dis *Disasm) setMrr(opcode *OpCode) {
+	v := dis.fetch(opcode)
+	opcode.setMod((v >> 6) & 3)
+	opcode.setReg((v >> 3) & 7)
+	opcode.setRm(v & 7)
+	dis.resolveDisp(opcode)
+}
+
+func (dis *Disasm) resolveDisp(opcode *OpCode) {
+	switch opcode.Mod {
+	case 0:
+		{
+			if opcode.Rm == 6 {
+				opcode.setDisp(int16(dis.fetch2(opcode)))
+			}
+		}
+	case 1:
+		opcode.setDisp(int16(int8(dis.fetch(opcode))))
+	case 2:
+		opcode.setDisp(int16(dis.fetch2(opcode)))
+	case 3:
+	default:
+		{
+			fmt.Printf("invalid Mod = %d\n", opcode.Mod)
+			os.Exit(1)
+		}
+	}
+}
+
 func test(opcode *OpCode) {
 	opcode.W = 1
 	opcode.Reg = 3
@@ -54,18 +83,19 @@ func test(opcode *OpCode) {
 func (dis *Disasm) Run() {
 	var opcode OpCode
 	var op byte
-	prevPc := dis.pc
+
 	for {
 		if int(dis.pc) == len(dis.text) {
 			break
 		}
-
+		prevPc := dis.pc
 		switch op = dis.fetch(&opcode); op {
 		case 0x00, 0x01, 0x02, 0x03:
 			{
 				opcode.setW(op & 1)
 				opcode.setD((op >> 1) & 1)
-				os.Exit(1)
+				dis.setMrr(&opcode)
+				dumpAdd(&opcode, prevPc)
 			}
 		case 0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7,
 			0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf:
@@ -90,5 +120,4 @@ func (dis *Disasm) Run() {
 
 		opcode.Reset()
 	}
-	fmt.Printf("\npc = %d\n", dis.pc)
 }
