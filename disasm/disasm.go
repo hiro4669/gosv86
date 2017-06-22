@@ -17,6 +17,10 @@ func (dis *Disasm) fetch(opcode *OpCode) byte {
 	return v
 }
 
+func (dis *Disasm) lookahead() byte {
+	return dis.text[dis.pc]
+}
+
 func (dis *Disasm) fetch2(opcode *OpCode) uint16 {
 	var dh byte = dis.text[dis.pc+1]
 	var dl byte = dis.text[dis.pc]
@@ -43,6 +47,19 @@ func (dis *Disasm) setData(opcode *OpCode) {
 	default:
 		fmt.Printf("invalid W = %d", opcode.W)
 		os.Exit(1)
+	}
+}
+
+func (dis *Disasm) setSData(opcode *OpCode) {
+	switch {
+	case opcode.S == 0 && opcode.W == 1:
+		{
+			opcode.Data = dis.fetch2(opcode)
+		}
+	default:
+		{
+			opcode.Data = uint16(dis.fetch(opcode))
+		}
 	}
 }
 
@@ -82,6 +99,14 @@ func (dis *Disasm) disaRMftR(op byte, opcode *OpCode, opName string, pc uint16) 
 	dumpRMftR(opcode, pc, opName)
 }
 
+func (dis *Disasm) disaIfRM(op byte, opcode *OpCode, opName string, pc uint16) {
+	opcode.setW(op & 1)
+	opcode.setS((op >> 1) & 1)
+	dis.setMrr(opcode)
+	dis.setSData(opcode)
+	dumpIfRM(opcode, pc, opName)
+}
+
 func (dis *Disasm) Run() {
 	var opcode OpCode
 	var op byte
@@ -98,6 +123,21 @@ func (dis *Disasm) Run() {
 		case 0x30, 0x31, 0x32, 0x33:
 			{
 				dis.disaRMftR(op, &opcode, "xor", prevPc)
+			}
+		case 0x80, 0x81, 0x82, 0x83:
+			{
+				nv := dis.lookahead()
+				switch (nv >> 3) & 7 {
+				case 7:
+					{ // cmp
+						dis.disaIfRM(op, &opcode, "cmp", prevPc)
+					}
+				default:
+					{
+						fmt.Println("not implemented for next byte in 0x80~0x83")
+						os.Exit(1)
+					}
+				}
 			}
 		case 0x88, 0x89, 0x8a, 0x8b:
 			{

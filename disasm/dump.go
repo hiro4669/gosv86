@@ -48,6 +48,15 @@ func dumpReg(w uint8, r uint8) string {
 	return reg[r]
 }
 
+func dumpImData(w uint8, data uint16) string {
+	lfmt := "%04x"
+	if w == 0 {
+		lfmt = "%02x"
+		data &= 0xff
+	}
+	return fmt.Sprintf(lfmt, data)
+}
+
 func resolveMrr(w uint8, mod uint8, reg uint8, rm uint8, disp int16) (string, string) {
 	regStr := dumpReg(w, reg)
 	var eaStr string
@@ -111,4 +120,9 @@ func dumpRMftR(opcode *OpCode, pc uint16, opName string) {
 	} else {
 		fmt.Println(format(makePrefix(opcode, pc), opName, reg, ea))
 	}
+}
+
+func dumpIfRM(opcode *OpCode, pc uint16, opName string) {
+	_, ea := resolveMrr(opcode.W, opcode.Mod, opcode.Reg, opcode.Rm, opcode.Disp)
+	fmt.Println(format(makePrefix(opcode, pc), opName, ea, dumpImData(opcode.W, opcode.Data)))
 }

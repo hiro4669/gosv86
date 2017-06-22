@@ -3,6 +3,7 @@ package disasm
 import "fmt"
 
 type OpCode struct {
+	S       uint8
 	W       uint8
 	D       uint8
 	Reg     uint8
@@ -15,6 +16,7 @@ type OpCode struct {
 }
 
 func (op *OpCode) Reset() {
+	op.S = 0
 	op.W = 0
 	op.D = 0
 	op.Mod = 0
@@ -26,7 +28,7 @@ func (op *OpCode) Reset() {
 }
 
 func (op *OpCode) ShowOpCode() {
-	fmt.Printf("d = %d, w = %d, reg = %04x\n", op.D, op.W, op.Reg)
+	fmt.Printf("d = %d, w = %d, s = %d, reg = %04x\n", op.D, op.W, op.S, op.Reg)
 	for i := 0; i < op.rawlen; i++ {
 		fmt.Printf("%02x ", op.rawdata[i])
 	}
@@ -41,6 +43,10 @@ func (op *OpCode) Add(v byte) byte {
 
 func (op *OpCode) setW(w uint8) {
 	op.W = w
+}
+
+func (op *OpCode) setS(s uint8) {
+	op.S = s
 }
 
 func (op *OpCode) setD(d uint8) {
