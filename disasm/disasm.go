@@ -29,7 +29,6 @@ func (dis *Disasm) fetch2(opcode *OpCode) uint16 {
 }
 
 func (dis *Disasm) Init(text []byte) {
-	fmt.Println("init called")
 	dis.pc = 0
 	dis.text = make([]byte, len(text))
 	copy(dis.text, text)
@@ -62,14 +61,25 @@ func (dis *Disasm) Run() {
 		}
 
 		switch op = dis.fetch(&opcode); op {
+		case 0x00, 0x01, 0x02, 0x03:
+			{
+				opcode.setW(op & 1)
+				opcode.setD((op >> 1) & 1)
+				os.Exit(1)
+			}
 		case 0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7,
 			0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf:
 			{
 				opcode.setW((op >> 3) & 1)
 				opcode.setReg(op & 7)
 				dis.setData(&opcode)
-				opcode.ShowOpCode()
 				dumpMov(&opcode, prevPc)
+			}
+		case 0xcd:
+			{
+				dis.setData(&opcode)
+				dumpInt(&opcode, prevPc)
+
 			}
 		default:
 			{

@@ -55,31 +55,29 @@ func main() {
 		os.Exit(1)
 	}
 	fileName := os.Args[1]
-	fmt.Println(fileName)
 
 	buf := readFile(fileName)
-
-	for i := 0; i < len(buf); i++ {
-		if i%16 == 0 {
-			fmt.Println()
+	/*
+		for i := 0; i < len(buf); i++ {
+			if i%16 == 0 {
+				fmt.Println()
+			}
+			fmt.Printf("%02x ", buf[i])
 		}
-		fmt.Printf("%02x ", buf[i])
-	}
-	fmt.Println()
-
+		fmt.Println()
+	*/
 	text := getText(buf)
-
-	for i := 0; i < len(text); i++ {
-		if i%16 == 0 {
-			fmt.Println()
+	/*
+		for i := 0; i < len(text); i++ {
+			if i%16 == 0 {
+				fmt.Println()
+			}
+			fmt.Printf("%02x ", text[i])
 		}
-		fmt.Printf("%02x ", text[i])
-	}
-	fmt.Println()
-
+		fmt.Println()
+	*/
 	//	var dis *disasm.Disasm = new(disasm.Disasm)
 	var dis disasm.Disasm
-	fmt.Println("Hello Disasm")
 	dis.Init(text)
 	dis.Run()
 }

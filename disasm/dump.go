@@ -49,14 +49,17 @@ func format(prefix string, opr string, op1 string, op2 string) string {
 	var fmtStr string
 	fmtStr = prefix + opr + " " + op1
 	if op2 != "" {
-		fmtStr += " "
+		fmtStr += ", "
 	}
 	fmtStr += op2
 	return fmtStr
 }
 
+func makePrefix(opcode *OpCode, pc uint16) string {
+	return formatPrefix(dumpAddress(pc), dumpRawData(opcode))
+}
+
 func dumpMov(opcode *OpCode, pc uint16) {
-	fmt.Println("dump")
 	/*
 		fmt.Println(formatPrefix(dumpAddress(pc), dumpRawData(opcode)))
 		fmt.Println(formatData(0, 0x1234))
@@ -65,6 +68,10 @@ func dumpMov(opcode *OpCode, pc uint16) {
 		fmt.Println(dstr)
 		fmt.Println("----")
 	*/
-	fmt.Println(format(formatPrefix(dumpAddress(pc), dumpRawData(opcode)), "mov",
+	fmt.Println(format(makePrefix(opcode, pc), "mov",
 		dumpReg(opcode.W, opcode.Reg), formatData(opcode.W, opcode.Data)))
+}
+
+func dumpInt(opcode *OpCode, pc uint16) {
+	fmt.Println(format(makePrefix(opcode, pc), "int", formatData(opcode.W, opcode.Data), ""))
 }
