@@ -59,11 +59,18 @@ func resolveMrr(w uint8, mod uint8, reg uint8, rm uint8, disp int16) (string, st
 			eaStr = fmt.Sprintf("[%s]", eaPrefix[rm])
 		}
 	case 1:
-		fallthrough
+		{
+			lfmt := "[%s+%x]"
+			if disp < 0 {
+				lfmt = "[%s%x]"
+			}
+			eaStr = fmt.Sprintf(lfmt, eaPrefix[rm], disp)
+		}
 	case 2:
-		fallthrough
+		fmt.Println("mod = 2 in dump not implemented")
+		os.Exit(1)
 	case 3:
-		fallthrough
+		eaStr = dumpReg(w, rm)
 	default:
 		{
 			fmt.Println("not implement or illeagal mod")
@@ -89,14 +96,6 @@ func makePrefix(opcode *OpCode, pc uint16) string {
 }
 
 func dumpMov(opcode *OpCode, pc uint16) {
-	/*
-		fmt.Println(formatPrefix(dumpAddress(pc), dumpRawData(opcode)))
-		fmt.Println(formatData(0, 0x1234))
-		dstr := formatPrefix(dumpAddress(pc), dumpRawData(opcode)) +
-			"mov " + dumpReg(opcode.W, opcode.Reg) + " " + formatData(opcode.W, opcode.Data)
-		fmt.Println(dstr)
-		fmt.Println("----")
-	*/
 	fmt.Println(format(makePrefix(opcode, pc), "mov",
 		dumpReg(opcode.W, opcode.Reg), formatData(opcode.W, opcode.Data)))
 }
@@ -105,11 +104,11 @@ func dumpInt(opcode *OpCode, pc uint16) {
 	fmt.Println(format(makePrefix(opcode, pc), "int", formatData(opcode.W, opcode.Data), ""))
 }
 
-func dumpAdd(opcode *OpCode, pc uint16) {
+func dumpRMftR(opcode *OpCode, pc uint16, opName string) {
 	reg, ea := resolveMrr(opcode.W, opcode.Mod, opcode.Reg, opcode.Rm, opcode.Disp)
 	if opcode.D == 0 {
-		fmt.Println(format(makePrefix(opcode, pc), "add", ea, reg))
+		fmt.Println(format(makePrefix(opcode, pc), opName, ea, reg))
 	} else {
-		fmt.Println(format(makePrefix(opcode, pc), "add", reg, ea))
+		fmt.Println(format(makePrefix(opcode, pc), opName, reg, ea))
 	}
 }
