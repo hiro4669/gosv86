@@ -54,7 +54,8 @@ func dumpReg(w uint8, r uint8) string {
 }
 
 func dumpImData(w uint8, data uint16) string {
-	lfmt := "%04x"
+	//	lfmt := "%04x"
+	lfmt := "%x"
 	if w == 0 {
 		lfmt = "%x"
 		data &= 0xff
@@ -68,11 +69,11 @@ func resolveMrr(w uint8, mod uint8, reg uint8, rm uint8, disp int16) (string, st
 	switch mod {
 	case 0:
 		if rm == 6 {
-			eaStr = fmt.Sprintf("%04x", disp)
+			eaStr = fmt.Sprintf("[%04x]", disp)
 		} else {
 			eaStr = fmt.Sprintf("[%s]", eaPrefix[rm])
 		}
-	case 1:
+	case 1, 2:
 		{
 			lfmt := "[%s+%x]"
 			if disp < 0 {
@@ -80,9 +81,6 @@ func resolveMrr(w uint8, mod uint8, reg uint8, rm uint8, disp int16) (string, st
 			}
 			eaStr = fmt.Sprintf(lfmt, eaPrefix[rm], disp)
 		}
-	case 2:
-		fmt.Println("mod = 2 in dump not implemented")
-		os.Exit(1)
 	case 3:
 		eaStr = dumpReg(w, rm)
 	default:
@@ -147,4 +145,18 @@ func dumpOneReg(opcode *OpCode, pc uint16, opName string) {
 
 func dumpSingleOp(opcode *OpCode, pc uint16, opName string) {
 	fmt.Println(makePrefix(opcode, pc) + opName)
+}
+
+func dumpLogic(opcode *OpCode, pc uint16, opName string) {
+	_, ea := resolveMrr(opcode.W, opcode.Mod, opcode.Reg, opcode.Rm, opcode.Disp)
+	num := "1"
+	if opcode.V == 1 {
+		num = "cl"
+	}
+	fmt.Println(format(makePrefix(opcode, pc), opName, ea, num))
+}
+
+func dumpOneMrr(opcode *OpCode, pc uint16, opName string) {
+	_, ea := resolveMrr(opcode.W, opcode.Mod, opcode.Reg, opcode.Rm, opcode.Disp)
+	fmt.Println(format(makePrefix(opcode, pc), opName, ea, ""))
 }

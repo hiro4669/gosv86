@@ -114,16 +114,29 @@ func (dis *Disasm) disaItRM(op byte, opcode *OpCode, opName string, pc uint16) {
 	dumpItRM(opcode, pc, opName)
 }
 
+func (dis *Disasm) disaLogic(op byte, opcode *OpCode, opName string, pc uint16) {
+	opcode.setW(op & 1)
+	opcode.setV((op >> 1) & 1)
+	dis.setMrr(opcode)
+	dumpLogic(opcode, pc, opName)
+}
+
 func (dis *Disasm) disaJump(op byte, opcode *OpCode, opName string, prevPc uint16) {
 	off := dis.fetch(opcode)
 	opcode.setJDisp(uint16((int32(dis.pc) + int32(int8(off))) & 0xffff))
 	dumpJump(opcode, prevPc, opName)
 }
 
-func (dis *Disasm) disaCall(op byte, opcode *OpCode, opName string, prevPc uint16) {
+func (dis *Disasm) disa2Jump(op byte, opcode *OpCode, opName string, prevPc uint16) {
 	off := dis.fetch2(opcode)
 	opcode.setJDisp(uint16((int32(dis.pc) + int32(int16(off))) & 0xffff))
 	dumpJump(opcode, prevPc, opName)
+}
+
+func (dis *Disasm) disaOneMrr(op byte, opcode *OpCode, opName string, prevPc uint16) {
+	opcode.setW(1)
+	dis.setMrr(opcode)
+	dumpOneMrr(opcode, prevPc, opName)
 }
 
 func (dis *Disasm) disaOneReg(op byte, opcode *OpCode, opName string, prevPc uint16) {
@@ -148,22 +161,42 @@ func (dis *Disasm) Run() {
 			{
 				dis.disaRMftR(op, &opcode, "xor", prevPc)
 			}
+		case 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4e, 0x4f:
+			{
+				dis.disaOneReg(op, &opcode, "dec", prevPc)
+			}
 		case 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57:
 			{
 				dis.disaOneReg(op, &opcode, "push", prevPc)
+			}
+		case 0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f:
+			{
+				dis.disaOneReg(op, &opcode, "pop", prevPc)
 			}
 		case 0x73:
 			{
 				dis.disaJump(op, &opcode, "jnb", prevPc)
 			}
+		case 0x74:
+			{
+				dis.disaJump(op, &opcode, "je", prevPc)
+			}
 		case 0x75:
 			{
 				dis.disaJump(op, &opcode, "jne", prevPc)
+			}
+		case 0x7c:
+			{
+				dis.disaJump(op, &opcode, "jl", prevPc)
 			}
 		case 0x80, 0x81, 0x82, 0x83:
 			{
 				nv := dis.lookahead()
 				switch (nv >> 3) & 7 {
+				case 0:
+					{ // add
+						dis.disaIfRM(op, &opcode, "add", prevPc)
+					}
 				case 7:
 					{ // cmp
 						dis.disaIfRM(op, &opcode, "cmp", prevPc)
@@ -199,9 +232,32 @@ func (dis *Disasm) Run() {
 				dumpInt(&opcode, prevPc)
 
 			}
+		case 0xd0, 0xd1, 0xd2, 0xd3:
+			{
+				nv := dis.lookahead()
+				switch (nv >> 3) & 7 {
+				case 4:
+					{ // shl
+						dis.disaLogic(op, &opcode, "shl", prevPc)
+					}
+				default:
+					{
+						fmt.Printf("%02x is not implemented yet\n", op)
+						os.Exit(1)
+					}
+				}
+			}
 		case 0xe8:
 			{
-				dis.disaCall(op, &opcode, "call", prevPc)
+				dis.disa2Jump(op, &opcode, "call", prevPc)
+			}
+		case 0xe9:
+			{
+				dis.disa2Jump(op, &opcode, "jmp", prevPc)
+			}
+		case 0xeb:
+			{
+				dis.disaJump(op, &opcode, "jmp short", prevPc)
 			}
 		case 0xf4:
 			{
@@ -218,6 +274,25 @@ func (dis *Disasm) Run() {
 				default:
 					{
 						fmt.Println("not implemented for next byte in 0xf6~0xf7")
+						os.Exit(1)
+					}
+				}
+			}
+		case 0xff:
+			{
+				nv := dis.lookahead()
+				switch (nv >> 3) & 7 {
+				case 2: // call
+					{
+						dis.disaOneMrr(op, &opcode, "call", prevPc)
+					}
+				case 6: // push
+					{
+						dis.disaOneMrr(op, &opcode, "push", prevPc)
+					}
+				default:
+					{
+						fmt.Println("not implemented for next byte in 0xff")
 						os.Exit(1)
 					}
 				}

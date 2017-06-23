@@ -3,6 +3,7 @@ package disasm
 import "fmt"
 
 type OpCode struct {
+	V       uint8
 	S       uint8
 	W       uint8
 	D       uint8
@@ -77,4 +78,8 @@ func (op *OpCode) setDisp(disp int16) {
 
 func (op *OpCode) setJDisp(jdisp uint16) {
 	op.JDisp = jdisp
+}
+
+func (op *OpCode) setV(v uint8) {
+	op.V = v
 }
