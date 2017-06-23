@@ -28,8 +28,13 @@ func formatData(w uint8, data uint16) string {
 	return fmt.Sprintf(pat, data)
 }
 
+func formatAddress(pc uint16) string {
+	return fmt.Sprintf("%04x", pc)
+}
+
 func dumpAddress(pc uint16) string {
-	return fmt.Sprintf("%04x: ", pc)
+	return formatAddress(pc) + ": "
+	//	return fmt.Sprintf("%04x: ", pc)
 }
 
 func dumpRawData(opcode *OpCode) string {
@@ -125,4 +130,8 @@ func dumpRMftR(opcode *OpCode, pc uint16, opName string) {
 func dumpIfRM(opcode *OpCode, pc uint16, opName string) {
 	_, ea := resolveMrr(opcode.W, opcode.Mod, opcode.Reg, opcode.Rm, opcode.Disp)
 	fmt.Println(format(makePrefix(opcode, pc), opName, ea, dumpImData(opcode.W, opcode.Data)))
+}
+
+func dumpJump(opcode *OpCode, pc uint16, opName string) {
+	fmt.Println(format(makePrefix(opcode, pc), opName, formatAddress(opcode.JDisp), ""))
 }

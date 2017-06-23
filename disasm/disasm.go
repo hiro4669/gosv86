@@ -107,6 +107,12 @@ func (dis *Disasm) disaIfRM(op byte, opcode *OpCode, opName string, pc uint16) {
 	dumpIfRM(opcode, pc, opName)
 }
 
+func (dis *Disasm) disaJump(op byte, opcode *OpCode, opName string, prevPc uint16) {
+	off := dis.fetch(opcode)
+	opcode.setJDisp(uint16((int32(dis.pc) + int32(int8(off))) & 0xffff))
+	dumpJump(opcode, prevPc, "jnb")
+}
+
 func (dis *Disasm) Run() {
 	var opcode OpCode
 	var op byte
@@ -123,6 +129,10 @@ func (dis *Disasm) Run() {
 		case 0x30, 0x31, 0x32, 0x33:
 			{
 				dis.disaRMftR(op, &opcode, "xor", prevPc)
+			}
+		case 0x73:
+			{
+				dis.disaJump(op, &opcode, "jnb", prevPc)
 			}
 		case 0x80, 0x81, 0x82, 0x83:
 			{

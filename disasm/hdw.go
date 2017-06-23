@@ -10,6 +10,7 @@ type OpCode struct {
 	Mod     uint8
 	Rm      uint8
 	Data    uint16
+	JDisp   uint16
 	Disp    int16
 	rawlen  int
 	rawdata [20]byte
@@ -25,6 +26,7 @@ func (op *OpCode) Reset() {
 	op.Data = 0
 	op.rawlen = 0
 	op.Disp = 0
+	op.JDisp = 0
 }
 
 func (op *OpCode) ShowOpCode() {
@@ -71,4 +73,8 @@ func (op *OpCode) setRm(rm uint8) {
 
 func (op *OpCode) setDisp(disp int16) {
 	op.Disp = disp
+}
+
+func (op *OpCode) setJDisp(jdisp uint16) {
+	op.JDisp = jdisp
 }
