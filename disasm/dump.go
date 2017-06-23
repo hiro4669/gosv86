@@ -56,7 +56,7 @@ func dumpReg(w uint8, r uint8) string {
 func dumpImData(w uint8, data uint16) string {
 	lfmt := "%04x"
 	if w == 0 {
-		lfmt = "%02x"
+		lfmt = "%x"
 		data &= 0xff
 	}
 	return fmt.Sprintf(lfmt, data)
@@ -134,4 +134,11 @@ func dumpIfRM(opcode *OpCode, pc uint16, opName string) {
 
 func dumpJump(opcode *OpCode, pc uint16, opName string) {
 	fmt.Println(format(makePrefix(opcode, pc), opName, formatAddress(opcode.JDisp), ""))
+}
+
+func dumpItRM(opcode *OpCode, pc uint16, opName string) {
+	_, ea := resolveMrr(opcode.W, opcode.Mod, opcode.Reg, opcode.Rm, opcode.Disp)
+	fmt.Println(format(makePrefix(opcode, pc), opName, ea, dumpImData(opcode.W, opcode.Data)))
+	//	fmt.Println(makePrefix(opcode, pc))
+	//	fmt.Println(ea)
 }

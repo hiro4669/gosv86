@@ -107,10 +107,17 @@ func (dis *Disasm) disaIfRM(op byte, opcode *OpCode, opName string, pc uint16) {
 	dumpIfRM(opcode, pc, opName)
 }
 
+func (dis *Disasm) disaItRM(op byte, opcode *OpCode, opName string, pc uint16) {
+	opcode.setW(op & 1)
+	dis.setMrr(opcode)
+	dis.setData(opcode)
+	dumpItRM(opcode, pc, opName)
+}
+
 func (dis *Disasm) disaJump(op byte, opcode *OpCode, opName string, prevPc uint16) {
 	off := dis.fetch(opcode)
 	opcode.setJDisp(uint16((int32(dis.pc) + int32(int8(off))) & 0xffff))
-	dumpJump(opcode, prevPc, "jnb")
+	dumpJump(opcode, prevPc, opName)
 }
 
 func (dis *Disasm) Run() {
@@ -172,6 +179,21 @@ func (dis *Disasm) Run() {
 				dis.setData(&opcode)
 				dumpInt(&opcode, prevPc)
 
+			}
+		case 0xf6, 0xf7:
+			{
+				nv := dis.lookahead()
+				switch (nv >> 3) & 7 {
+				case 0:
+					{ // cmp
+						dis.disaItRM(op, &opcode, "test", prevPc)
+					}
+				default:
+					{
+						fmt.Println("not implemented for next byte in 0xf6~0xf7")
+						os.Exit(1)
+					}
+				}
 			}
 		default:
 			{
