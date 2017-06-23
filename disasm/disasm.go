@@ -141,6 +141,10 @@ func (dis *Disasm) Run() {
 			{
 				dis.disaJump(op, &opcode, "jnb", prevPc)
 			}
+		case 0x75:
+			{
+				dis.disaJump(op, &opcode, "jne", prevPc)
+			}
 		case 0x80, 0x81, 0x82, 0x83:
 			{
 				nv := dis.lookahead()
