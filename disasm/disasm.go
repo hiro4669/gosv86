@@ -120,6 +120,17 @@ func (dis *Disasm) disaJump(op byte, opcode *OpCode, opName string, prevPc uint1
 	dumpJump(opcode, prevPc, opName)
 }
 
+func (dis *Disasm) disaCall(op byte, opcode *OpCode, opName string, prevPc uint16) {
+	off := dis.fetch2(opcode)
+	opcode.setJDisp(uint16((int32(dis.pc) + int32(int16(off))) & 0xffff))
+	dumpJump(opcode, prevPc, opName)
+}
+
+func (dis *Disasm) disaOneReg(op byte, opcode *OpCode, opName string, prevPc uint16) {
+	opcode.setReg(op & 7)
+	dumpOneReg(opcode, prevPc, opName)
+}
+
 func (dis *Disasm) Run() {
 	var opcode OpCode
 	var op byte
@@ -136,6 +147,10 @@ func (dis *Disasm) Run() {
 		case 0x30, 0x31, 0x32, 0x33:
 			{
 				dis.disaRMftR(op, &opcode, "xor", prevPc)
+			}
+		case 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57:
+			{
+				dis.disaOneReg(op, &opcode, "push", prevPc)
 			}
 		case 0x73:
 			{
@@ -183,6 +198,14 @@ func (dis *Disasm) Run() {
 				dis.setData(&opcode)
 				dumpInt(&opcode, prevPc)
 
+			}
+		case 0xe8:
+			{
+				dis.disaCall(op, &opcode, "call", prevPc)
+			}
+		case 0xf4:
+			{
+				dumpSingleOp(&opcode, prevPc, "hlt")
 			}
 		case 0xf6, 0xf7:
 			{

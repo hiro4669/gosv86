@@ -139,6 +139,12 @@ func dumpJump(opcode *OpCode, pc uint16, opName string) {
 func dumpItRM(opcode *OpCode, pc uint16, opName string) {
 	_, ea := resolveMrr(opcode.W, opcode.Mod, opcode.Reg, opcode.Rm, opcode.Disp)
 	fmt.Println(format(makePrefix(opcode, pc), opName, ea, dumpImData(opcode.W, opcode.Data)))
-	//	fmt.Println(makePrefix(opcode, pc))
-	//	fmt.Println(ea)
+}
+
+func dumpOneReg(opcode *OpCode, pc uint16, opName string) {
+	fmt.Println(format(makePrefix(opcode, pc), opName, dumpReg(1, opcode.Reg), ""))
+}
+
+func dumpSingleOp(opcode *OpCode, pc uint16, opName string) {
+	fmt.Println(makePrefix(opcode, pc) + opName)
 }
