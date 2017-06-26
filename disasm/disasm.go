@@ -144,6 +144,17 @@ func (dis *Disasm) disaOneReg(op byte, opcode *OpCode, opName string, prevPc uin
 	dumpOneReg(opcode, prevPc, opName)
 }
 
+func (dis *Disasm) disaInOutPort(op byte, opcode *OpCode, opName string, prevPc uint16) {
+	opcode.setW(op & 1)
+	opcode.setPort(dis.fetch(opcode))
+	dumpInOutPort(opcode, prevPc, opName)
+}
+
+func (dis *Disasm) disaInOutVar(op byte, opcode *OpCode, opName string, prevPc uint16) {
+	opcode.setW(op & 1)
+	dumpInOutVar(opcode, prevPc, opName)
+}
+
 func (dis *Disasm) Run() {
 	var opcode OpCode
 	var op byte
@@ -156,6 +167,10 @@ func (dis *Disasm) Run() {
 		case 0x00, 0x01, 0x02, 0x03:
 			{
 				dis.disaRMftR(op, &opcode, "add", prevPc)
+			}
+		case 0x20, 0x21, 0x22, 0x23:
+			{
+				dis.disaRMftR(op, &opcode, "and", prevPc)
 			}
 		case 0x30, 0x31, 0x32, 0x33:
 			{
@@ -247,6 +262,10 @@ func (dis *Disasm) Run() {
 					}
 				}
 			}
+		case 0xe4, 0xe5:
+			{
+				dis.disaInOutPort(op, &opcode, "in", prevPc)
+			}
 		case 0xe8:
 			{
 				dis.disa2Jump(op, &opcode, "call", prevPc)
@@ -258,6 +277,10 @@ func (dis *Disasm) Run() {
 		case 0xeb:
 			{
 				dis.disaJump(op, &opcode, "jmp short", prevPc)
+			}
+		case 0xec, 0xed:
+			{
+				dis.disaInOutVar(op, &opcode, "in", prevPc)
 			}
 		case 0xf4:
 			{

@@ -10,6 +10,7 @@ type OpCode struct {
 	Reg     uint8
 	Mod     uint8
 	Rm      uint8
+	Port    uint8
 	Data    uint16
 	JDisp   uint16
 	Disp    int16
@@ -28,6 +29,7 @@ func (op *OpCode) Reset() {
 	op.rawlen = 0
 	op.Disp = 0
 	op.JDisp = 0
+	op.Port = 0
 }
 
 func (op *OpCode) ShowOpCode() {
@@ -82,4 +84,8 @@ func (op *OpCode) setJDisp(jdisp uint16) {
 
 func (op *OpCode) setV(v uint8) {
 	op.V = v
+}
+
+func (op *OpCode) setPort(port uint8) {
+	op.Port = port
 }

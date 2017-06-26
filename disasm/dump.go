@@ -160,3 +160,11 @@ func dumpOneMrr(opcode *OpCode, pc uint16, opName string) {
 	_, ea := resolveMrr(opcode.W, opcode.Mod, opcode.Reg, opcode.Rm, opcode.Disp)
 	fmt.Println(format(makePrefix(opcode, pc), opName, ea, ""))
 }
+
+func dumpInOutPort(opcode *OpCode, pc uint16, opName string) {
+	fmt.Println(format(makePrefix(opcode, pc), opName, dumpReg(opcode.W, 0), dumpImData(0, uint16(opcode.Port))))
+}
+
+func dumpInOutVar(opcode *OpCode, pc uint16, opName string) {
+	fmt.Println(format(makePrefix(opcode, pc), opName, dumpReg(opcode.W, 0), "dx"))
+}
