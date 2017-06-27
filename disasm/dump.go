@@ -168,3 +168,7 @@ func dumpInOutPort(opcode *OpCode, pc uint16, opName string) {
 func dumpInOutVar(opcode *OpCode, pc uint16, opName string) {
 	fmt.Println(format(makePrefix(opcode, pc), opName, dumpReg(opcode.W, 0), "dx"))
 }
+
+func dumpUndefined(opcode *OpCode, pc uint16) {
+	fmt.Println(format(makePrefix(opcode, pc), "(undefined)", "", ""))
+}

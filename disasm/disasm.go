@@ -139,6 +139,12 @@ func (dis *Disasm) disaOneMrr(op byte, opcode *OpCode, opName string, prevPc uin
 	dumpOneMrr(opcode, prevPc, opName)
 }
 
+func (dis *Disasm) disaOneMrrW(op byte, opcode *OpCode, opName string, prevPc uint16) {
+	opcode.setW(op & 1)
+	dis.setMrr(opcode)
+	dumpOneMrr(opcode, prevPc, opName)
+}
+
 func (dis *Disasm) disaOneReg(op byte, opcode *OpCode, opName string, prevPc uint16) {
 	opcode.setReg(op & 7)
 	dumpOneReg(opcode, prevPc, opName)
@@ -166,7 +172,19 @@ func (dis *Disasm) Run() {
 		switch op = dis.fetch(&opcode); op {
 		case 0x00, 0x01, 0x02, 0x03:
 			{
+				if int(dis.pc) == len(dis.text) {
+					dumpUndefined(&opcode, prevPc)
+					break
+				}
 				dis.disaRMftR(op, &opcode, "add", prevPc)
+			}
+		case 0x08, 0x09, 0x0a, 0x0b:
+			{
+				dis.disaRMftR(op, &opcode, "or", prevPc)
+			}
+		case 0x18, 0x19, 0x1a, 0x1b:
+			{
+				dis.disaRMftR(op, &opcode, "sbb", prevPc)
 			}
 		case 0x20, 0x21, 0x22, 0x23:
 			{
@@ -204,6 +222,10 @@ func (dis *Disasm) Run() {
 			{
 				dis.disaJump(op, &opcode, "jl", prevPc)
 			}
+		case 0x7d:
+			{
+				dis.disaJump(op, &opcode, "jnl", prevPc)
+			}
 		case 0x80, 0x81, 0x82, 0x83:
 			{
 				nv := dis.lookahead()
@@ -211,6 +233,11 @@ func (dis *Disasm) Run() {
 				case 0:
 					{ // add
 						dis.disaIfRM(op, &opcode, "add", prevPc)
+					}
+				case 5:
+					{ // sub
+						dis.disaIfRM(op, &opcode, "sub", prevPc)
+
 					}
 				case 7:
 					{ // cmp
@@ -229,7 +256,9 @@ func (dis *Disasm) Run() {
 			}
 		case 0x8d:
 			{
-				dis.disaRMftR(op, &opcode, "lea", prevPc)
+				opcode.setD(op & 1)
+				dis.setMrr(&opcode)
+				dumpRMftR(&opcode, prevPc, "lea")
 			}
 		case 0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7,
 			0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf:
@@ -239,6 +268,10 @@ func (dis *Disasm) Run() {
 				opcode.setReg(op & 7)
 				dis.setData(&opcode)
 				dumpMov(&opcode, prevPc)
+			}
+		case 0xc3:
+			{
+				dumpSingleOp(&opcode, prevPc, "ret")
 			}
 		case 0xcd:
 			{
@@ -293,6 +326,10 @@ func (dis *Disasm) Run() {
 				case 0:
 					{ // cmp
 						dis.disaItRM(op, &opcode, "test", prevPc)
+					}
+				case 3: // neg
+					{
+						dis.disaOneMrr(op, &opcode, "neg", prevPc)
 					}
 				default:
 					{
