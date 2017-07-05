@@ -145,9 +145,19 @@ func (dis *Disasm) disaOneMrrW(op byte, opcode *OpCode, opName string, prevPc ui
 	dumpOneMrr(opcode, prevPc, opName)
 }
 
+func (dis *Disasm) disaTwoMrrW(op byte, opcode *OpCode, opName string, prevPc uint16) {
+	opcode.setW(op & 1)
+	dis.setMrr(opcode)
+	dumpTwoMrr(opcode, prevPc, opName)
+}
+
 func (dis *Disasm) disaOneReg(op byte, opcode *OpCode, opName string, prevPc uint16) {
 	opcode.setReg(op & 7)
 	dumpOneReg(opcode, prevPc, opName)
+}
+func (dis *Disasm) disaOneRegAc(op byte, opcode *OpCode, opName string, prevPc uint16) {
+	opcode.setReg(op & 7)
+	dumpOneRegAc(opcode, prevPc, opName)
 }
 
 func (dis *Disasm) disaInOutPort(op byte, opcode *OpCode, opName string, prevPc uint16) {
@@ -161,6 +171,17 @@ func (dis *Disasm) disaInOutVar(op byte, opcode *OpCode, opName string, prevPc u
 	dumpInOutVar(opcode, prevPc, opName)
 }
 
+func (dis *Disasm) disaImtoAc(op byte, opcode *OpCode, opName string, prevPc uint16) {
+	opcode.setW(op & 1)
+	dis.setData(opcode)
+	dumpImtoAc(opcode, prevPc, opName)
+}
+
+func (dis *Disasm) disaStringMan(op byte, opcode *OpCode, opName string, prevPc uint16) {
+	opcode.setW(op & 1)
+	dumpStringMan(opcode, prevPc, opName)
+}
+
 func (dis *Disasm) Run() {
 	var opcode OpCode
 	var op byte
@@ -169,6 +190,7 @@ func (dis *Disasm) Run() {
 			break
 		}
 		prevPc := dis.pc
+	REP:
 		switch op = dis.fetch(&opcode); op {
 		case 0x00, 0x01, 0x02, 0x03:
 			{
@@ -182,6 +204,10 @@ func (dis *Disasm) Run() {
 			{
 				dis.disaRMftR(op, &opcode, "or", prevPc)
 			}
+		case 0x10, 0x11, 0x12, 0x13:
+			{
+				dis.disaRMftR(op, &opcode, "adc", prevPc)
+			}
 		case 0x18, 0x19, 0x1a, 0x1b:
 			{
 				dis.disaRMftR(op, &opcode, "sbb", prevPc)
@@ -190,9 +216,29 @@ func (dis *Disasm) Run() {
 			{
 				dis.disaRMftR(op, &opcode, "and", prevPc)
 			}
+		case 0x28, 0x29, 0x2a, 0x2b:
+			{
+				dis.disaRMftR(op, &opcode, "sub", prevPc)
+			}
+		case 0x2c, 0x2d:
+			{
+				dis.disaImtoAc(op, &opcode, "sub", prevPc)
+			}
 		case 0x30, 0x31, 0x32, 0x33:
 			{
 				dis.disaRMftR(op, &opcode, "xor", prevPc)
+			}
+		case 0x38, 0x39, 0x3a, 0x3b:
+			{
+				dis.disaRMftR(op, &opcode, "cmp", prevPc)
+			}
+		case 0x3c, 0x3d:
+			{
+				dis.disaImtoAc(op, &opcode, "cmp", prevPc)
+			}
+		case 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47:
+			{
+				dis.disaOneReg(op, &opcode, "inc", prevPc)
 			}
 		case 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4e, 0x4f:
 			{
@@ -206,6 +252,10 @@ func (dis *Disasm) Run() {
 			{
 				dis.disaOneReg(op, &opcode, "pop", prevPc)
 			}
+		case 0x72:
+			{
+				dis.disaJump(op, &opcode, "jb", prevPc)
+			}
 		case 0x73:
 			{
 				dis.disaJump(op, &opcode, "jnb", prevPc)
@@ -218,6 +268,14 @@ func (dis *Disasm) Run() {
 			{
 				dis.disaJump(op, &opcode, "jne", prevPc)
 			}
+		case 0x76:
+			{
+				dis.disaJump(op, &opcode, "jbe", prevPc)
+			}
+		case 0x77:
+			{
+				dis.disaJump(op, &opcode, "jnbe", prevPc)
+			}
 		case 0x7c:
 			{
 				dis.disaJump(op, &opcode, "jl", prevPc)
@@ -226,6 +284,14 @@ func (dis *Disasm) Run() {
 			{
 				dis.disaJump(op, &opcode, "jnl", prevPc)
 			}
+		case 0x7e:
+			{
+				dis.disaJump(op, &opcode, "jle", prevPc)
+			}
+		case 0x7f:
+			{
+				dis.disaJump(op, &opcode, "jnle", prevPc)
+			}
 		case 0x80, 0x81, 0x82, 0x83:
 			{
 				nv := dis.lookahead()
@@ -233,6 +299,18 @@ func (dis *Disasm) Run() {
 				case 0:
 					{ // add
 						dis.disaIfRM(op, &opcode, "add", prevPc)
+					}
+				case 1: // or
+					{
+						dis.disaItRM(op, &opcode, "or", prevPc)
+					}
+				case 3:
+					{ // sbb
+						dis.disaIfRM(op, &opcode, "sbb", prevPc)
+					}
+				case 4:
+					{ // and
+						dis.disaItRM(op, &opcode, "and", prevPc)
 					}
 				case 5:
 					{ // sub
@@ -250,6 +328,14 @@ func (dis *Disasm) Run() {
 					}
 				}
 			}
+		case 0x84, 0x85:
+			{
+				dis.disaRMftR(op, &opcode, "test", prevPc)
+			}
+		case 0x86, 0x87:
+			{
+				dis.disaTwoMrrW(op, &opcode, "xchg", prevPc)
+			}
 		case 0x88, 0x89, 0x8a, 0x8b:
 			{
 				dis.disaRMftR(op, &opcode, "mov", prevPc)
@@ -260,9 +346,25 @@ func (dis *Disasm) Run() {
 				dis.setMrr(&opcode)
 				dumpRMftR(&opcode, prevPc, "lea")
 			}
+		case 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97:
+			{
+				dis.disaOneRegAc(op, &opcode, "xchg", prevPc)
+			}
 		case 0x98:
 			{
 				dumpSingleOp(&opcode, prevPc, "cbw")
+			}
+		case 0x99:
+			{
+				dumpSingleOp(&opcode, prevPc, "cwd")
+			}
+		case 0xa4, 0xa5:
+			{
+				dis.disaStringMan(op, &opcode, "movs", prevPc)
+			}
+		case 0xa8, 0xa9:
+			{
+				dis.disaImtoAc(op, &opcode, "test", prevPc)
 			}
 		case 0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7,
 			0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf:
@@ -273,9 +375,30 @@ func (dis *Disasm) Run() {
 				dis.setData(&opcode)
 				dumpMov(&opcode, prevPc)
 			}
+		case 0xc2:
+			{
+				opcode.setJDisp(dis.fetch2(&opcode))
+				dumpJump(&opcode, prevPc, "ret")
+			}
 		case 0xc3:
 			{
 				dumpSingleOp(&opcode, prevPc, "ret")
+			}
+		case 0xc6, 0xc7:
+			{
+				nv := dis.lookahead()
+				switch (nv >> 3) & 7 {
+				case 0:
+					{
+						dis.disaItRM(op, &opcode, "mov", prevPc)
+					}
+				default:
+					{
+						fmt.Println("not implemented for next byte in 0xc6~0xc7")
+						os.Exit(1)
+					}
+				}
+
 			}
 		case 0xcd:
 			{
@@ -288,9 +411,21 @@ func (dis *Disasm) Run() {
 			{
 				nv := dis.lookahead()
 				switch (nv >> 3) & 7 {
+				case 2:
+					{ // rcl
+						dis.disaLogic(op, &opcode, "rcl", prevPc)
+					}
 				case 4:
 					{ // shl
 						dis.disaLogic(op, &opcode, "shl", prevPc)
+					}
+				case 5:
+					{ // shr
+						dis.disaLogic(op, &opcode, "shr", prevPc)
+					}
+				case 7:
+					{ // sar
+						dis.disaLogic(op, &opcode, "sar", prevPc)
 					}
 				default:
 					{
@@ -298,6 +433,10 @@ func (dis *Disasm) Run() {
 						os.Exit(1)
 					}
 				}
+			}
+		case 0xe2:
+			{
+				dis.disaJump(op, &opcode, "loop", prevPc)
 			}
 		case 0xe4, 0xe5:
 			{
@@ -319,6 +458,11 @@ func (dis *Disasm) Run() {
 			{
 				dis.disaInOutVar(op, &opcode, "in", prevPc)
 			}
+		case 0xf2, 0xf3:
+			{
+				opcode.Rep = true
+				goto REP
+			}
 		case 0xf4:
 			{
 				dumpSingleOp(&opcode, prevPc, "hlt")
@@ -333,7 +477,15 @@ func (dis *Disasm) Run() {
 					}
 				case 3: // neg
 					{
-						dis.disaOneMrr(op, &opcode, "neg", prevPc)
+						dis.disaOneMrrW(op, &opcode, "neg", prevPc)
+					}
+				case 4:
+					{ // mul
+						dis.disaOneMrrW(op, &opcode, "mul", prevPc)
+					}
+				case 6:
+					{ // div
+						dis.disaOneMrrW(op, &opcode, "div", prevPc)
 					}
 				default:
 					{
@@ -342,17 +494,37 @@ func (dis *Disasm) Run() {
 					}
 				}
 			}
-		case 0xff:
+		case 0xfc:
+			{
+				dumpSingleOp(&opcode, prevPc, "cld")
+			}
+		case 0xfd:
+			{
+				dumpSingleOp(&opcode, prevPc, "std")
+			}
+		case 0xfe, 0xff:
 			{
 				nv := dis.lookahead()
 				switch (nv >> 3) & 7 {
+				case 0:
+					{ // inc
+						dis.disaOneMrrW(op, &opcode, "inc", prevPc)
+					}
+				case 1:
+					{ // dec
+						dis.disaOneMrrW(op, &opcode, "dec", prevPc)
+					}
 				case 2: // call
 					{
-						dis.disaOneMrr(op, &opcode, "call", prevPc)
+						dis.disaOneMrrW(op, &opcode, "call", prevPc)
+					}
+				case 4: // jmp
+					{
+						dis.disaOneMrrW(op, &opcode, "jmp", prevPc)
 					}
 				case 6: // push
 					{
-						dis.disaOneMrr(op, &opcode, "push", prevPc)
+						dis.disaOneMrrW(op, &opcode, "push", prevPc)
 					}
 				default:
 					{

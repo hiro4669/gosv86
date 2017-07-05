@@ -22,7 +22,7 @@ func formatPrefix(pcs string, rbs string) string {
 func formatData(w uint8, data uint16) string {
 	pat := "%04x"
 	if w == 0 {
-		pat = "%02x"
+		pat = "%x"
 		data &= 0xff
 	}
 	return fmt.Sprintf(pat, data)
@@ -55,7 +55,7 @@ func dumpReg(w uint8, r uint8) string {
 
 func dumpImData(w uint8, data uint16) string {
 	//	lfmt := "%04x"
-	lfmt := "%x"
+	lfmt := "%04x"
 	if w == 0 {
 		lfmt = "%x"
 		data &= 0xff
@@ -127,7 +127,11 @@ func dumpRMftR(opcode *OpCode, pc uint16, opName string) {
 
 func dumpIfRM(opcode *OpCode, pc uint16, opName string) {
 	_, ea := resolveMrr(opcode.W, opcode.Mod, opcode.Reg, opcode.Rm, opcode.Disp)
-	fmt.Println(format(makePrefix(opcode, pc), opName, ea, dumpImData(opcode.W, opcode.Data)))
+	var w uint8
+	if opcode.S == 0 && opcode.W == 1 {
+		w = 1
+	}
+	fmt.Println(format(makePrefix(opcode, pc), opName, ea, dumpImData(w, opcode.Data)))
 }
 
 func dumpJump(opcode *OpCode, pc uint16, opName string) {
@@ -136,11 +140,18 @@ func dumpJump(opcode *OpCode, pc uint16, opName string) {
 
 func dumpItRM(opcode *OpCode, pc uint16, opName string) {
 	_, ea := resolveMrr(opcode.W, opcode.Mod, opcode.Reg, opcode.Rm, opcode.Disp)
+	if opcode.W == 0 {
+		opName += " byte"
+	}
 	fmt.Println(format(makePrefix(opcode, pc), opName, ea, dumpImData(opcode.W, opcode.Data)))
 }
 
 func dumpOneReg(opcode *OpCode, pc uint16, opName string) {
 	fmt.Println(format(makePrefix(opcode, pc), opName, dumpReg(1, opcode.Reg), ""))
+}
+
+func dumpOneRegAc(opcode *OpCode, pc uint16, opName string) {
+	fmt.Println(format(makePrefix(opcode, pc), opName, dumpReg(1, opcode.Reg), "ax"))
 }
 
 func dumpSingleOp(opcode *OpCode, pc uint16, opName string) {
@@ -161,6 +172,11 @@ func dumpOneMrr(opcode *OpCode, pc uint16, opName string) {
 	fmt.Println(format(makePrefix(opcode, pc), opName, ea, ""))
 }
 
+func dumpTwoMrr(opcode *OpCode, pc uint16, opName string) {
+	_, ea := resolveMrr(opcode.W, opcode.Mod, opcode.Reg, opcode.Rm, opcode.Disp)
+	fmt.Println(format(makePrefix(opcode, pc), opName, ea, dumpReg(opcode.W, opcode.Reg)))
+}
+
 func dumpInOutPort(opcode *OpCode, pc uint16, opName string) {
 	fmt.Println(format(makePrefix(opcode, pc), opName, dumpReg(opcode.W, 0), dumpImData(0, uint16(opcode.Port))))
 }
@@ -171,4 +187,22 @@ func dumpInOutVar(opcode *OpCode, pc uint16, opName string) {
 
 func dumpUndefined(opcode *OpCode, pc uint16) {
 	fmt.Println(format(makePrefix(opcode, pc), "(undefined)", "", ""))
+}
+
+func dumpImtoAc(opcode *OpCode, pc uint16, opName string) {
+	fmt.Println(format(makePrefix(opcode, pc), opName, dumpReg(opcode.W, 0), formatData(opcode.W, opcode.Data)))
+}
+
+func dumpStringMan(opcode *OpCode, pc uint16, opName string) {
+	if opcode.W == 0 {
+		opName += "b"
+	} else {
+		opName += "w"
+	}
+	if opcode.Rep {
+		opName = "rep " + opName
+	}
+	fmt.Println(makePrefix(opcode, pc) + opName)
+	//	fmt.Println(format(makePrefix(opcode, pc), opName, "", ""))
+
 }

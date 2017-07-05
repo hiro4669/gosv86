@@ -16,6 +16,7 @@ type OpCode struct {
 	Disp    int16
 	rawlen  int
 	rawdata [20]byte
+	Rep     bool
 }
 
 func (op *OpCode) Reset() {
@@ -30,6 +31,7 @@ func (op *OpCode) Reset() {
 	op.Disp = 0
 	op.JDisp = 0
 	op.Port = 0
+	op.Rep = false
 }
 
 func (op *OpCode) ShowOpCode() {
